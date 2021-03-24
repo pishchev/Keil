@@ -1,0 +1,142 @@
+#include <stm32f0xx.h>
+#include <time.h>
+
+void Init(void);
+void wait(uint32_t del);
+void timer_init(uint32_t param);
+void setBit(unsigned int bit);
+void resetBit(unsigned int bit);
+void SysTick_Handler (void);
+void blink(unsigned int bit, uint32_t delay ,unsigned int times );
+void red2green(void);
+void green2red(void);
+
+void Init()
+{
+	RCC->AHBENR |= RCC_AHBENR_GPIOCEN|RCC_AHBENR_GPIOAEN;
+	GPIOA->MODER &= ~GPIO_MODER_MODER0;
+	GPIOC->MODER |= GPIO_MODER_MODER6_0 | GPIO_MODER_MODER7_0 | GPIO_MODER_MODER8_0 | GPIO_MODER_MODER9_0;
+}
+
+void timer_init(uint32_t period)
+{
+	//SystemInit();
+	//SystemCoreClockUpdate();
+	
+	SysTick->LOAD = period - 1;
+	SysTick->VAL = period - 1;
+	SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk;
+}
+
+// SETTER and RESETTER
+void setBit(unsigned int bit)
+{
+	GPIOC->ODR |= bit;
+}
+
+void resetBit(unsigned int bit)
+{
+	GPIOC->ODR &= ~bit;
+}
+
+//SystemCoreClockUpdate();
+//period = SystemCoreClock;
+
+static volatile uint32_t timestamp = 0;
+
+void SysTick_Handler(void)
+{
+   //timestamp++;
+}
+
+void wait(uint32_t del)
+{
+	uint32_t delay = timestamp + del;
+	while (delay > timestamp){
+		if (SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk)
+		{
+			timestamp++;
+		}
+	}
+}
+
+void blink(unsigned int bit, uint32_t delay ,unsigned int times )
+{
+	for (unsigned int i = 0 ; i < times ; i = i + 1)
+	{
+		setBit(bit);
+		wait(delay);
+		resetBit(bit);
+		wait(delay);
+	}
+}
+
+void red2green(void)
+{
+	setBit(GPIO_ODR_8);
+	wait(15000);
+	resetBit(GPIO_ODR_8);
+	resetBit(GPIO_ODR_6);
+	setBit(GPIO_ODR_9);
+}
+
+void green2red(void)
+{
+	blink(GPIO_ODR_9, 5000,3);
+	setBit(GPIO_ODR_8);
+	wait(10000);	
+	resetBit(GPIO_ODR_8);
+	setBit(GPIO_ODR_6);		
+}
+
+
+// 6 red
+// 8 yellow
+// 9 green
+
+int main(void)
+{
+	Init();
+	timer_init(1000);
+	
+	uint32_t delay = 20000;
+	uint32_t trigger = timestamp+ delay;
+	uint32_t status = 0; // 0 - green / 1 - 
+	setBit(GPIO_ODR_9);
+	
+	while(1)
+	{
+		if (SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk)
+		{
+			timestamp++;
+		}
+		
+		//click red->green
+		if (GPIOA->IDR & GPIO_IDR_0 && status != 0)
+		{
+			red2green();
+			status = 0;
+			trigger = timestamp+ delay;
+		}
+		//continue green
+		if (GPIOA->IDR & GPIO_IDR_0 && status == 0)
+		{
+			trigger = timestamp+ delay;
+		}
+		//green -> red
+		if (status == 0 &&  timestamp > trigger)
+		{
+			green2red();
+			status = 1;
+			trigger = timestamp+ delay;
+		}
+		//red -> green
+		if (status == 1 && timestamp > trigger)
+		{
+			red2green();
+			status = 0;
+			trigger = timestamp+ delay;
+		}
+		
+	}
+}
