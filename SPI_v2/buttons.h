@@ -3,21 +3,21 @@
 #include <stm32f0xx.h>
 #include <stdbool.h>
 
-static const uint32_t waitingPeriod = 10;
-static const uint32_t checkPeriod = 10;
-
 typedef struct _Button
 {
-	bool state;
-	bool lastState;
+	bool currentTrueState; //state of button without drebezg contactov
+	bool currentToggledState; //state of button without drebezg contactov with toggling logic
+	bool valueChanged;//is true value was changed from low to high in last checking
 	
-	bool pressDown;
-	bool checked;
+	bool nowRawState; //just state in now (dt), very raw data, useless
+	bool wasFrontUp; //is previous raw state with current raw state generate front up 
+	bool wasFrontDown; //is previous raw state with current raw state generate front down
 	
-	uint32_t timeAfterPress;
-	uint32_t timeAfterChanges;
+	
+	int countTicksAfterLastToggling; //ticks after last changing state (Chenging state can be made only when this one greater then ticksDisabling)
+	int ticksDisabling; //tick time of disabling (drebezg)
 }Button;
 
 void createButton(Button* button);
-void ButtonEvent(Button* button, bool state);
+void ButtonEvent(Button* button, bool rawState);
 

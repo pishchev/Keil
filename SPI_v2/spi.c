@@ -4,13 +4,6 @@
 
 void initSPI(void)
 {
-	/* (1) Master selection, BR: Fpclk/256 (due to C27 on the board, SPI_CLK is
-	set to the minimum) CPOL and CPHA at zero (rising first edge) */
-	/* (2) Slave select output enabled, RXNE IT, 8-bit Rx fifo */
-	/* (3) Enable SPI1 */
-	//SPI1->CR1 = SPI_CR1_MSTR | SPI_CR1_BR; /* (1) */
-	//SPI1->CR2 = SPI_CR2_SSOE | SPI_CR2_RXNEIE | SPI_CR2_FRXTH | SPI_CR2_DS_2 | SPI_CR2_DS_1 | SPI_CR2_DS_0; /* (2) */
-	//SPI1->CR1 |= SPI_CR1_SPE; /* (3) */
 	RCC->AHBENR |= RCC_AHBENR_GPIOBEN | RCC_AHBENR_GPIOAEN;
 	RCC->APB1ENR |= RCC_APB1ENR_SPI2EN;
 		// Set Alternate function 1 to pin 
@@ -66,40 +59,11 @@ void stagingPacket(Packet* packet)
 												((0x1U << 7)& (packet->data[7][packet->sendingStage/2]?0xFF:0x00))
 		)<< 8 | (0x1U << packet->sendingStage/2);
 	}
-	if (packet->sendingStage % 2 == 1)
+	else
 	{
 			GPIOA->ODR |= GPIO_ODR_8;
 	}
 	packet->sendingStage++;
 	if (packet->sendingStage == 16)
 		packet->sendingStage = 0;
-}
-
-void sendPointSPI(int x, int y)
-{
-		GPIOA->ODR &= ~GPIO_ODR_8;
-		while (SPI2->SR & SPI_SR_BSY);
-		SPI2->DR = (0x1U << x) << 8 | (0x1U << y);
-		GPIOA->ODR |= GPIO_ODR_8;
-}
-
-void sendCrossSPI(int x, int y)
-{
-		GPIOA->ODR &= ~GPIO_ODR_8;
-		while (SPI2->SR & SPI_SR_BSY);
-		SPI2->DR = (0x1U << x) << 8 |(0x1U << (x+1)) << 8|(0x1U << (x-1)) << 8| (0x1U << y);
-		while (SPI2->SR & SPI_SR_BSY);
-		GPIOA->ODR |= GPIO_ODR_8;
-	
-		GPIOA->ODR &= ~GPIO_ODR_8;
-		while (SPI2->SR & SPI_SR_BSY);
-		SPI2->DR = (0x1U << x) << 8 | (0x1U << (y-1));
-  	while (SPI2->SR & SPI_SR_BSY);
-		GPIOA->ODR |= GPIO_ODR_8;
-	
-		GPIOA->ODR &= ~GPIO_ODR_8;
-		while (SPI2->SR & SPI_SR_BSY);
-		SPI2->DR = (0x1U << x) << 8 | (0x1U << (y+1));
-		while (SPI2->SR & SPI_SR_BSY);
-		GPIOA->ODR |= GPIO_ODR_8;
 }

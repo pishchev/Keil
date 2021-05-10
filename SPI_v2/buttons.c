@@ -2,27 +2,63 @@
 
 void createButton(Button* button)
 {
-	button->state = false;
-	button->lastState = false;
-	button->pressDown = false;
-	button->checked = false;
-	button->timeAfterPress = 0;
+	button->currentToggledState = false;
+	button->currentTrueState = false;
+	button->nowRawState = false;
+	button->wasFrontDown = false;
+	button->wasFrontUp = false;
+	button->valueChanged = false;
+	
+	button->countTicksAfterLastToggling = 0;
+	button->ticksDisabling = 10;
 }
 
-void ButtonEvent(Button* button, bool state)
+void ButtonEvent(Button* button, bool rawState)
 {	
-	if (button->pressDown)
+	button->valueChanged = false;
+	if (button->nowRawState == false && rawState == true)
 	{
-		button->state = false;
-		if (!state)
-		{
-			button->pressDown = false;
-		}
+			button->wasFrontUp = true;
+	}
+	else
+	{
+			button->wasFrontUp = false;
 	}
 	
-	if (!button->pressDown && state)
+	if (button->nowRawState == true && rawState == false)
 	{
-		button->pressDown = true;
-		button->state = true;
+			button->wasFrontDown = true;
+	}
+	else
+	{
+			button->wasFrontDown = false;
+	}
+	
+	button->nowRawState = rawState;
+	
+	if (!button->wasFrontUp && !button->wasFrontDown)
+	{
+	   button->countTicksAfterLastToggling++;
+		if (button->countTicksAfterLastToggling > button->ticksDisabling)
+		{
+			button->countTicksAfterLastToggling = button->ticksDisabling;
+		}
+	}
+	else
+	{
+		button->countTicksAfterLastToggling = 0;
+	}
+	
+	if (button->countTicksAfterLastToggling >= button->ticksDisabling)
+	{
+		if (button->currentTrueState != button->nowRawState)
+		{
+			button->currentTrueState = button->nowRawState;
+			
+			if (button->currentTrueState){
+				button->currentToggledState = !button->currentToggledState;
+				button->valueChanged = true;
+			}
+		}
 	}
 }

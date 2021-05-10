@@ -26,7 +26,7 @@ void timer_init(void);
 void timer_init()
 {
 	SystemCoreClockUpdate();
-	SysTick_Config(SystemCoreClock/2000);
+	SysTick_Config(SystemCoreClock/1000);
 }
 
 void setBit(volatile uint32_t* bit, uint32_t value);
@@ -216,28 +216,32 @@ int main(void)
 	while(1) 
 	{
 		
-		if (buttons[3].state)
+		if (buttons[3].valueChanged)
 		{
+			buttons[3].valueChanged = false;
 			x = x - 1;
 			if ( x<  0)
 				x=7;
 		}
 
-		if (buttons[2].state)
+		if (buttons[2].valueChanged)
 		{
+			buttons[2].valueChanged = false;
 			x = x + 1;
 			if ( x > 7)
 				x=0;
 		}
 
-		if (buttons[0].state)
+		if (buttons[0].valueChanged)
 		{
+			buttons[0].valueChanged = false;
 			y = y - 1;
 			if ( y<  0)
 				y=7;
 	  }
-		if (buttons[1].state)
+		if (buttons[1].valueChanged)
 		{
+			buttons[1].valueChanged = false;
 			y = y + 1;
 			if ( y> 7)
 				y= 0;
@@ -246,10 +250,19 @@ int main(void)
 		for(int i = 0; i<8;i++)
 		for(int j = 0; j<8;j++)
 		{
-			packet.data[i][j] = false;
+			if ((i == x & j == y)|
+					(i == x+1 & j == y)|
+					(i == x-1 & j == y)|
+					(i == x & j == y+1)|
+					(i == x & j == y-1))
+			{
+				packet.data[i][j] = true;
+			}
+			else
+			{
+				packet.data[i][j] = false;
+			}
 		}
-		
-		crest(x,y);
 		
 	}
 }
