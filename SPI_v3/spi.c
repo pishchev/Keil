@@ -38,12 +38,9 @@ void initSPI(void)
 	
 	SPI2->CR1 |= SPI_CR1_SPE;
 	
-	
-	//SPI2->CR2 |= SPI_CR2_TXEIE;
 	SPI2->CR2 |= SPI_CR2_RXNEIE;
 	
 	NVIC_EnableIRQ(SPI2_IRQn);
-  //NVIC_SetPriority(SPI2_IRQn, 2);
 	SPI2->DR = 0;
 }
 

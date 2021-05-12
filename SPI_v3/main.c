@@ -65,7 +65,7 @@ void SysTick_Handler(void)
 {	
 	
 	tick_ += 1;
-	if (tick_>70)
+	if (tick_>200)
 	{	
 		tick = !tick;
 		tick_ = 0;
@@ -101,7 +101,7 @@ void SysTick_Handler(void)
 	
 	if (!(SPI2->SR & SPI_SR_BSY))
 	{
-		stagingPacket(&packet);
+		//stagingPacket(&packet);
 	}
 }
 
@@ -260,18 +260,37 @@ int main(void)
 		for(int i = 0; i<8;i++)
 		for(int j = 0; j<8;j++)
 		{
-			if ((i == x & j == y)|
+			if (tick)
+			{
+				if ((i == x & j == y)|
 					(i == x+1 & j == y)|
 					(i == x-1 & j == y)|
 					(i == x & j == y+1)|
 					(i == x & j == y-1))
-			{
-				packet.data[i][j] = true;
+				{
+					packet.data[i][j] = true;
+				}
+				else
+				{
+					packet.data[i][j] = false;
+				}
 			}
 			else
 			{
-				packet.data[i][j] = false;
+				if ((i == x & j == y)|
+					(i == x+1 & j == y+1)|
+					(i == x-1 & j == y-1)|
+					(i == x+1 & j == y-1)|
+					(i == x-1 & j == y+1))
+				{
+					packet.data[i][j] = true;
+				}
+				else
+				{
+					packet.data[i][j] = false;
+				}
 			}
+			
 		}
 		
 	}

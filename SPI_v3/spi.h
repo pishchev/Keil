@@ -13,7 +13,5 @@ void ConstrPacket(Packet* packet);
 void stagingPacket(Packet* packet);
 void loadPacket(Packet* packet);
 void sendPacket(Packet* packet);
-void sendPointSPI(int x, int y);
-void sendCrossSPI(int x, int y);
 
 
