@@ -11,7 +11,7 @@ static Timer timer;
 void initializeTimer()
 {
 	RCC->APB2ENR |= RCC_APB2ENR_TIM17EN;
-	TIM17->PSC = 100;
+	TIM17->PSC = SystemCoreClock/100000;
 	TIM17->ARR = 1;
 	
 	TIM17->CR1 |= TIM_CR1_ARPE | TIM_CR1_DIR | TIM_CR1_CEN; 

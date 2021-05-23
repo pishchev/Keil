@@ -119,6 +119,23 @@ void getBit()
 	resetBit(&GPIOC->ODR, GPIO_ODR_8);
 }
 
+void blicks(bool* blick)
+{
+	if (*blick)
+		{
+			setBit(&GPIOC->ODR, GPIO_ODR_9);
+		}
+		else
+		{
+			resetBit(&GPIOC->ODR, GPIO_ODR_9);
+		}
+		*blick = !*blick;
+}
+
+int tickToTime(int tick , int a , int c)
+{
+	return tick/2*a + c;
+}
 
 int main(void)
 {
@@ -134,31 +151,26 @@ int main(void)
 	
 	int time_point = 0;
 	
-	draw(15);
-	
-	int n = 0;
+	int mean_count =100;
 	
 	while(1) 
 	{
-		if (blick)
-		{
-			setBit(&GPIOC->ODR, GPIO_ODR_9);
-		}
-		else
-		{
-			resetBit(&GPIOC->ODR, GPIO_ODR_9);
-		}
-		blick = !blick;
+		//blicks(&blick);
 		
-		timer.counter = 0;
-		sendBit(16000);
+		int sum = 0;
 		
-		time_point =  timer.counter;
+		for (int i = 0 ; i < mean_count ; i ++ )
+		{
+				timer.counter = 0;
+				sendBit(1000);
+				time_point =  timer.counter;
+				getBit();
+				sum+= timer.counter-time_point;
 			
-		getBit();
+		}
 		
 		
-		draw(ticks);
+		draw(tickToTime(sum/mean_count,1,-18));
 		
 		
 	}
