@@ -6,6 +6,7 @@
 #include "spi.h"
 #include "numbers.h"
 #include "timer.h"
+#include "transfer.h"
 
 void Init(void);
 void Init()
@@ -145,6 +146,8 @@ int main(void)
 	initializeTimer();
 	ConstrPacket(&packet);
 	
+	ConstrTransfer(&transfer, false);
+	
 	int timeToDraw = 0;
 	
 	bool blick = false;
@@ -153,25 +156,39 @@ int main(void)
 	
 	int mean_count =100;
 	
+	int current_value = 0;
+	
 	while(1) 
 	{
 		//blicks(&blick);
-		
-		int sum = 0;
-		
-		for (int i = 0 ; i < mean_count ; i ++ )
+		if (transfer.isTransmit)
 		{
-				timer.counter = 0;
-				sendBit(1000);
-				time_point =  timer.counter;
-				getBit();
-				sum+= timer.counter-time_point;
+			int sum = 0;
+		
+			for (int i = 0 ; i < mean_count ; i ++ )
+			{
+					timer.counter = 0;
+					sendBit(1000);
+					time_point =  timer.counter;
+					getBit();
+					sum+= timer.counter-time_point;
 			
+			}
+		
+			int value = tickToTime(sum/mean_count,1,-14);
+			transfer.data = value;
+			transmitMessage(&transfer);
+			draw(value);
 		}
-		
-		
-		draw(tickToTime(sum/mean_count,1,-18));
-		
+		else
+		{
+			receiveMessage(&transfer);
+			if (current_value != transfer.data)
+			{
+				draw(transfer.data);
+				current_value = transfer.data;
+			}	
+		}
 		
 	}
 }
