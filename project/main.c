@@ -11,22 +11,18 @@ void Init(void);
 void Init()
 {
 	RCC->AHBENR |= RCC_AHBENR_GPIOCEN|RCC_AHBENR_GPIOAEN|RCC_AHBENR_GPIOBEN;
+	
 	GPIOC->MODER &= ~GPIO_MODER_MODER6;//sbros
 	GPIOC->MODER &= ~GPIO_MODER_MODER7;//sbros
+	GPIOC->MODER &= ~GPIO_MODER_MODER8;
+	GPIOC->MODER &= ~GPIO_MODER_MODER9;
 	
 	GPIOC->MODER |= GPIO_MODER_MODER6_0;
+	GPIOC->MODER |= GPIO_MODER_MODER8_0;
+	GPIOC->MODER |= GPIO_MODER_MODER9_0;
+	
 	GPIOC->MODER &= ~GPIO_MODER_MODER7;
 	
-	GPIOC->PUPDR |= GPIO_PUPDR_PUPDR6_1;
-	
-	GPIOC->MODER &= ~GPIO_MODER_MODER12;
-	GPIOC->MODER |=	GPIO_MODER_MODER12_0;
-	GPIOA->MODER &= ~GPIO_MODER_MODER4;
-	GPIOA->PUPDR |= GPIO_PUPDR_PUPDR4_1;
-	GPIOA->PUPDR |= GPIO_PUPDR_PUPDR5_1;
-	GPIOA->MODER &= ~GPIO_MODER_MODER5;
-	GPIOA->MODER &= ~GPIO_MODER_MODER15;
-	GPIOA->MODER |= GPIO_MODER_MODER15_0;
 }
 void timer_init(void);
 void timer_init()
@@ -51,8 +47,6 @@ void resetBit(volatile uint32_t* bit, uint32_t value)
 void resetAll(void);
 void resetAll()
 {
-	resetBit(&GPIOC->ODR, GPIO_ODR_6);
-	resetBit(&GPIOC->ODR, GPIO_ODR_7);
 	resetBit(&GPIOC->ODR, GPIO_ODR_8);
 	resetBit(&GPIOC->ODR, GPIO_ODR_9);
 }
@@ -75,8 +69,6 @@ void SPI2_IRQHandler(void)
 	stagingPacket(&packet);
 }
 
-DoublePole val;
-
 void drawPole(Pole pole , int pos);
 void drawPole(Pole pole , int pos)
 {
@@ -87,11 +79,44 @@ void drawPole(Pole pole , int pos)
 				}
 }
 
-void draw(DoublePole poles);
-void draw(DoublePole poles)
+void draw(int num);
+void draw(int num)
 {
-	drawPole(poles.pole0 , 0);
-	drawPole(poles.pole1 , 1);
+	
+	DoublePole val;
+
+	setNumber(&val ,num);
+	drawPole(val.pole0 , 0);
+	drawPole(val.pole1 , 1);
+}
+
+void sendBit(int sendTime);
+void sendBit(int sendTime)
+{
+	setBit(&GPIOC->ODR, GPIO_ODR_6);	
+	int timePoint = timer.counter;
+	while (timer.counter - timePoint < sendTime)
+	{
+		
+	}
+	resetBit(&GPIOC->ODR, GPIO_ODR_6);	
+}
+
+static int ticks = 0;
+
+void getBit();
+void getBit()
+{
+	ticks = 0;
+	while (!(GPIOC->IDR & GPIO_IDR_7))
+	{
+	}		
+	while (GPIOC->IDR & GPIO_IDR_7)
+	{
+		ticks ++;
+		setBit(&GPIOC->ODR, GPIO_ODR_8);
+	}		
+	resetBit(&GPIOC->ODR, GPIO_ODR_8);
 }
 
 
@@ -103,42 +128,38 @@ int main(void)
 	initializeTimer();
 	ConstrPacket(&packet);
 	
-	setNumber(&val,0);
-	draw(val);
-
-  int point1;
+	int timeToDraw = 0;
 	
-	int num = 0 ;
+	bool blick = false;
 	
-	int send_counter = 0 ;
+	int time_point = 0;
 	
-	int counter = 0; 
+	draw(15);
 	
-	int tick_needed = 0 ;
+	int n = 0;
 	
 	while(1) 
 	{
-		num = 0 ;
-		send_counter = 0 ;
-		
-		setBit(&GPIOC->ODR, GPIO_ODR_6);	
-		while (send_counter< 100)
-		{send_counter+=1;}			
-		resetBit(&GPIOC->ODR, GPIO_ODR_6);
-		
-		while (!(GPIOC->IDR & GPIO_IDR_7))
-		{num+=1; }		
-		
-		counter +=  num; 		
-		tick_needed +=1;
-		
-		if (tick_needed>100)
+		if (blick)
 		{
-			tick_needed = 0 ; 		
-			setNumber(&val, counter);
-			draw(val);	
-			counter = 0;
+			setBit(&GPIOC->ODR, GPIO_ODR_9);
 		}
+		else
+		{
+			resetBit(&GPIOC->ODR, GPIO_ODR_9);
+		}
+		blick = !blick;
+		
+		timer.counter = 0;
+		sendBit(16000);
+		
+		time_point =  timer.counter;
+			
+		getBit();
+		
+		
+		draw(ticks);
+		
 		
 	}
 }
